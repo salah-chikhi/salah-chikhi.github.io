@@ -207,7 +207,9 @@ a:focus-visible { outline: 3px solid var(--warm); outline-offset: 4px; }
 .anim [data-a="growx"] { animation-name: a-growx; transform-box: fill-box; transform-origin: left center; }
 .anim [data-a="growy"] { animation-name: a-growy; transform-box: fill-box; transform-origin: center bottom; }
 .anim [data-a="draw"] { stroke-dasharray: 1; animation-name: a-draw; animation-duration: 1.3s; animation-timing-function: ease-in-out; }
-.calm .anim [data-a] { animation-name: a-fade; animation-duration: 0.6s; animation-timing-function: ease; transform: none; stroke-dasharray: none; }
+.calm .anim [data-a] { animation-name: a-fade; animation-duration: 0.6s; animation-timing-function: ease; }
+.calm .anim [data-a="draw"] { stroke-dasharray: none; }
+@media print { .anim [data-a] { animation: none !important; } .anim [data-a="draw"] { stroke-dasharray: none; } }
 @keyframes a-fade { from { opacity: 0; } }
 @keyframes a-pop { from { transform: scale(0); } }
 @keyframes a-growx { from { transform: scaleX(0); } }
