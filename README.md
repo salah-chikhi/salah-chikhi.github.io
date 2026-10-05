@@ -20,6 +20,8 @@ python tools/build_figures.py index.html
 ```
 
 It rewrites the figures between the `<!--FIG:name-->` and `<!--/FIG-->` markers.
+Math labels are typeset in Computer Modern by matplotlib (`pip install matplotlib`) and
+embedded as SVG paths, so they look like LaTeX and still follow the light/dark theme.
 
 The selected readings and favorite papers on `misc.html` are the `BOOKS` and
 `PAPERS` lists in the script at the bottom of that page.

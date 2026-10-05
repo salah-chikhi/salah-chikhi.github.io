@@ -39,9 +39,9 @@ def fig_opt():
     bnd = [(X(a), Y(max(1 / (1 + n * a), abs(1 - a) ** n))) for a in grid if max(1 / (1 + n * a), abs(1 - a) ** n) <= ymax]
     b = [f'<path class="d-axis" d="M{X0} {Y1} V{Y0} H{X1}"/>']
     for a in (0.6, 1.0, 1.4, 1.8):
-        b.append(f'<text class="d-tick" x="{f(X(a))}" y="{Y0+18}" text-anchor="middle">{a:g}</text>')
+        b.append(tex(f"${a:g}$", X(a), Y0 + 18, 13, anchor="middle", cls="t-soft"))
     for v in (0.1, 0.2):
-        b.append(f'<text class="d-tick" x="{X0-8}" y="{f(Y(v)+4)}" text-anchor="end">{v:g}</text>')
+        b.append(tex(f"${v:g}$", X0 - 8, Y(v) + 4, 13, anchor="end", cls="t-soft"))
     b.append(f'<polyline class="c-band"{A("fade", 1.1)} points="{pts(bnd)}"/>')
     b.append(f'<polyline class="c-accent c-mid"{A("draw", 0)} points="{pts(dec)}"/>')
     b.append(f'<polyline class="c-warm c-mid"{A("draw", 0.35)} points="{pts(ris)}"/>')
@@ -49,79 +49,141 @@ def fig_opt():
     b.append(f'<line class="d-guide"{A("fade", 1.4)} x1="{f(hx)}" y1="{f(hy)}" x2="{f(hx)}" y2="{Y0}"/>')
     b.append(f'<line class="d-guide"{A("fade", 1.4)} x1="{X0}" y1="{f(hy)}" x2="{f(hx)}" y2="{f(hy)}"/>')
     b.append(f'<circle class="d-star"{A("pop", 1.3)} cx="{f(hx)}" cy="{f(hy)}" r="6"/>')
-    b.append(f'<text class="d-math d-accent"{A("fade", 0.6)} x="{f(X(0.84))}" y="{f(Y(0.125))}">1/(1+nα)</text>')
-    b.append(f'<text class="d-math d-warm"{A("fade", 0.9)} x="{f(X(1.86))}" y="{f(Y(0.215))}" text-anchor="end">|1−α|{sup("n")}</text>')
-    b.append(f'<text class="d-key"{A("fade", 1.6)} x="{f(hx)}" y="{Y0+18}" text-anchor="middle">h{sub("5")}</text>')
-    b.append(f'<text class="d-key"{A("fade", 1.6)} x="{X0+8}" y="{f(hy-8)}">η{sub("5")}</text>')
-    b.append(f'<text class="d-note" x="{(X0+X1)//2}" y="{Y0+44}" text-anchor="middle">constant stepsize α, n = 5 steps</text>')
+    b.append(tex(r"$1/(1+n\alpha)$", X(0.84), Y(0.125), 18, cls="t-accent", extra=A("fade", 0.6)))
+    b.append(tex(r"$|1-\alpha|^{n}$", X(1.86), Y(0.215), 18, anchor="end", cls="t-warm", extra=A("fade", 0.9)))
+    b.append(tex(r"$h_5$", hx, Y0 + 19, 16, anchor="middle", extra=A("fade", 1.6)))
+    b.append(tex(r"$\eta_5$", X0 + 8, hy - 8, 16, extra=A("fade", 1.6)))
+    b.append(tex(r"$\alpha$", X1, Y0 + 40, 17, anchor="end"))
+    b.append(tex(r"$n=5$", X1, Y1 + 14, 15, anchor="end", cls="t-soft"))
     return svg("f-opt", "The optimal constant stepsize sits where two worst cases meet",
                f"For n = 5 steps of gradient descent the worst-case final gradient is at least the larger of 1/(1+5α) and |1−α|^5. The two branches cross at α = h5 ≈ {h:.4f}, where the value is η5 ≈ {eta:.4f}; the paper proves this value is attained and that h5 is the unique optimal constant stepsize.",
                "".join(b), h=290)
 
+# ---------------------------------------------------------------- LaTeX-style labels
+# Math is set in Computer Modern by matplotlib's mathtext and embedded as SVG paths, so it reads like
+# LaTeX and still follows the theme through CSS (class "tex").
+import matplotlib
+matplotlib.rcParams["mathtext.fontset"] = "cm"
+from matplotlib.textpath import TextPath
+from matplotlib.font_manager import FontProperties
+from matplotlib.path import Path as MplPath
+
+def tex(s, x, y, size=16, anchor="start", cls="", extra=""):
+    """Render the mathtext string s with its baseline at (x, y)."""
+    tp = TextPath((0, 0), s, size=size, prop=FontProperties(family="serif"))
+    bb = tp.get_extents()
+    dx = {"start": -bb.x0, "middle": -(bb.x0 + bb.x1) / 2, "end": -bb.x1}[anchor]
+    g = lambda u, v: f"{u + dx:.2f} {-v:.2f}"
+    d = []
+    for verts, code in tp.iter_segments(curves=True, simplify=False):
+        p = [g(verts[k], verts[k + 1]) for k in range(0, len(verts), 2)]
+        if code == MplPath.MOVETO: d.append("M" + p[0])
+        elif code == MplPath.LINETO: d.append("L" + p[0])
+        elif code == MplPath.CURVE3: d.append("Q" + " ".join(p))
+        elif code == MplPath.CURVE4: d.append("C" + " ".join(p))
+        elif code == MplPath.CLOSEPOLY: d.append("Z")
+    return f'<path class="tex {cls}"{extra} transform="translate({x:.1f} {y:.1f})" d="{"".join(d)}"/>'
+
+
 # ---------------------------------------------------------------- 2. Taylor / networked MDP
 def fig_rl():
-    """Derivatives of agent i's local Q-function decay exponentially with graph distance.
+    """Left: a network where agent i and its kappa-neighborhood are kept and the rest is marginalized.
+    Right: derivatives of Q_i decay exponentially with the graph distance d(beta) of the agents involved.
+    Schematic: kappa = 1, rho = 0.45."""
+    rnd = random.Random(11)
+    b = []
 
-    Left: second-order derivatives |d2 Q_i / ds_j ds_k| on a chain of agents; the bound depends on the
-    farthest agent involved, max(|j-i|, |k-i|), so the map is made of concentric square rings.
-    Right: first-order derivatives |dQ_i / ds_j| under the envelope rho^|j-i|.
-    Schematic magnitudes: rho = 0.5, kept neighborhood kappa = 2.
-    """
-    rho, K, R = 0.5, 2, 4                      # decay rate, kept radius, agents shown on each side of i
-    b = ['<defs><pattern id="rl-hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
-         '<line class="d-hatch" x1="0" y1="0" x2="0" y2="5"/></pattern></defs>']
+    # --- jittered triangular lattice, so the graph looks irregular but stays planar
+    s, rows, cols = 42.0, 7, 6
+    hgt = s * math.sqrt(3) / 2
+    ox, oy = 24.0, 30.0
+    pos = {}
+    for r in range(rows):
+        for c in range(cols):
+            x = ox + c * s + (s / 2 if r % 2 else 0)
+            if x > 262: continue
+            pos[(r, c)] = [x + rnd.uniform(-0.12, 0.12) * s, oy + r * hgt + rnd.uniform(-0.12, 0.12) * s]
+    def lattice_nbrs(r, c):
+        cand = [(r, c + 1), (r + 1, c - 1), (r + 1, c)] if r % 2 == 0 else [(r, c + 1), (r + 1, c), (r + 1, c + 1)]
+        return [q for q in cand if q in pos]
+    edges = [(p, q) for p in pos for q in lattice_nbrs(*p)]
 
-    # left: heat map of second-order derivatives
-    x0, y0, pitch, cell = 40, 20, 22, 20
-    n = 2 * R + 1
-    for bj in range(n):
-        for aj in range(n):
-            a, c = aj - R, bj - R
-            m = max(abs(a), abs(c))
-            x, y = x0 + aj * pitch, y0 + bj * pitch
-            op = 0.10 + 0.90 * rho ** m
-            b.append(f'<rect class="d-heat" data-a="fade" style="--d:{0.07*m:.2f}s;opacity:{op:.3f}" x="{x}" y="{y}" width="{cell}" height="{cell}" rx="3"/>')
-            if m > K:
-                b.append(f'<rect{A("fade", 0.07 * m)} x="{x}" y="{y}" width="{cell}" height="{cell}" rx="3" fill="url(#rl-hatch)"/>')
-    kx, ky = x0 + (R - K) * pitch - 4, y0 + (R - K) * pitch - 4
-    kw = (2 * K + 1) * pitch - (pitch - cell) + 8
-    b.append(f'<rect class="d-keepbox"{A("draw", 0.6)} x="{kx}" y="{ky}" width="{kw}" height="{kw}" rx="6"/>')
-    side = n * pitch - (pitch - cell)
-    cx = x0 + R * pitch + cell / 2
-    b.append(f'<text class="d-tick" x="{f(cx)}" y="{y0 + side + 14}" text-anchor="middle">i</text>')
-    b.append(f'<text class="d-tick" x="{x0 - 8}" y="{f(y0 + R * pitch + cell / 2 + 4)}" text-anchor="end">i</text>')
-    b.append(f'<text class="d-note" x="{f(x0 + side / 2)}" y="{y0 + side + 34}" text-anchor="middle">|∂²Q{sub("i")} / ∂s{sub("j")}∂s{sub("k")}|  over agents j, k</text>')
+    # agent i: the node nearest to the middle of the panel; its kappa = 1 neighborhood
+    i = min(pos, key=lambda p: (pos[p][0] - 140) ** 2 + (pos[p][1] - 140) ** 2)
+    adj = {p: set() for p in pos}
+    for p, q in edges: adj[p].add(q); adj[q].add(p)
+    hood = {i} | adj[i]
+    # thin out the far edges for an irregular look (never inside the neighborhood, never isolating a node)
+    kept = []
+    deg = {p: len(adj[p]) for p in pos}
+    for p, q in edges:
+        if not (p in hood and q in hood) and rnd.random() < 0.3 and deg[p] > 3 and deg[q] > 3:
+            deg[p] -= 1; deg[q] -= 1
+            continue
+        kept.append((p, q))
+    cx, cy = pos[i]
+    rad = max(math.dist(pos[i], pos[q]) for q in adj[i]) + 14
+    for p in pos:                              # keep every outside node clearly outside the disk
+        if p in hood: continue
+        dd = math.dist(pos[i], pos[p])
+        if dd < rad + 10:
+            k = (rad + 10) / dd
+            pos[p] = [cx + (pos[p][0] - cx) * k, cy + (pos[p][1] - cy) * k]
+    lx, ly = cx + rad * 0.5, cy - rad - 7          # baseline of the N_i label
+    gone = {p for p in pos if p not in hood and lx - 12 <= pos[p][0] <= lx + 44 and ly - 32 <= pos[p][1] <= ly + 10}
+    for p in gone: del pos[p]
+    kept = [(p, q) for p, q in kept if p in pos and q in pos]
+    # hop distance from i, used only to stage the animation
+    hop = {i: 0}; frontier = [i]
+    kadj = {p: set() for p in pos}
+    for p, q in kept: kadj[p].add(q); kadj[q].add(p)
+    while frontier:
+        nxt = []
+        for p in frontier:
+            for q in kadj[p]:
+                if q not in hop: hop[q] = hop[p] + 1; nxt.append(q)
+        frontier = nxt
 
-    # right: first-order derivatives with their exponential envelope
-    X0, X1, base, H = 292, 500, 196, 150
-    step = (X1 - X0) / n
-    X = lambda a: X0 + (a + R + 0.5) * step
-    Y = lambda a: base - H * rho ** abs(a)
-    b.append(f'<rect class="d-keep d-keepzone"{A("fade", 0.6)} x="{f(X(-K) - step / 2)}" y="{base - H - 14}" width="{f((2 * K + 1) * step)}" height="{H + 14}" rx="6"/>')
-    env = [(X(t / 20), Y(t / 20)) for t in range(int((-R - 0.45) * 20), int((R + 0.45) * 20) + 1)]
-    b.append(f'<polyline class="c-ink c-dash"{A("fade", 1.1)} points="{pts(env)}"/>')
-    b.append(f'<line class="d-axis" x1="{X0}" y1="{base}" x2="{X1}" y2="{base}"/>')
-    for a in range(-R, R + 1):
-        x, y = X(a), Y(a)
-        kept = abs(a) <= K
-        b.append(f'<line class="d-stem{"" if kept else " d-stem-off"}"{A("growy", 0.25 + 0.09 * abs(a))} x1="{f(x)}" y1="{base}" x2="{f(x)}" y2="{f(y)}"/>')
-        cls = "d-node-hot" if a == 0 else ("d-node-near" if kept else "d-node")
-        b.append(f'<circle class="{cls}"{A("pop", 0.55 + 0.09 * abs(a))} cx="{f(x)}" cy="{f(y)}" r="{6 if a == 0 else 5}"/>')
-    b.append(f'<text class="d-tick" x="{f(X(0))}" y="{base + 14}" text-anchor="middle">i</text>')
-    b.append(f'<text class="d-label d-warm" x="{f(X(K) + step / 2 - 4)}" y="{base - H - 2}" text-anchor="end">kept</text>')
-    b.append(f'<text class="d-math"{A("fade", 1.2)} x="{f(X(2.6))}" y="{f(Y(1.6))}">ρ{sup("|j−i|")}</text>')
-    b.append(f'<text class="d-note" x="{f((X0 + X1) / 2)}" y="{y0 + side + 34}" text-anchor="middle">|∂Q{sub("i")} / ∂s{sub("j")}|  along the chain</text>')
+    b.append(f'<circle class="g-hood"{A("fade", 0.45)} cx="{cx:.1f}" cy="{cy:.1f}" r="{rad:.1f}"/>')
+    for p, q in kept:
+        inside = p in hood and q in hood
+        t = 0.06 * min(hop.get(p, 6), hop.get(q, 6))
+        (x1, y1), (x2, y2) = pos[p], pos[q]
+        b.append(f'<line class="{"g-edge-in" if inside else "g-edge"}"{A("fade", t)} x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}"/>')
+    for p, (x, y) in pos.items():
+        cls, r = ("g-node-i", 10) if p == i else (("g-node-in", 8) if p in hood else ("g-node", 6.5))
+        b.append(f'<circle class="{cls}"{A("pop", 0.06 * hop.get(p, 6))} cx="{x:.1f}" cy="{y:.1f}" r="{r}"/>')
+    b.append(tex(r"$i$", cx, cy + 25, 17, anchor="middle", cls="t-warm", extra=A("fade", 0.3)))
+    b.append(tex(r"$\mathcal{N}_i^{\kappa}$", lx, ly, 19, cls="t-warm", extra=A("fade", 0.7)))
+    b.append(tex(r"$\mathcal{N}_{-i}^{\kappa}$", 14, 296, 17, cls="t-soft", extra=A("fade", 0.9)))
+    b.append(f'<path class="g-arrow"{A("fade", 0.9)} d="M46 283 L64 266"/><path class="g-arrowhead"{A("fade", 0.9)} d="M68 262 L59 265 L65 271 Z"/>')
 
-    # the bound behind both panels
-    b.append('<line class="d-divider" x1="30" y1="258" x2="490" y2="258"/>')
-    b.append(f'<text class="d-math"{A("fade", 1.4)} x="260" y="279" text-anchor="middle" font-size="15">|∂{sup("β")}Q{sub("i")}| ≤ L{sub("Q")} ρ{sup("d(β)")}</text>')
-    b.append(f'<text class="d-note"{A("fade", 1.4)} x="260" y="296" text-anchor="middle">d(β): graph distance from i to the farthest agent involved in the derivative</text>')
+    # --- right: derivative magnitude against graph distance
+    X0, X1, base, top = 298, 508, 238, 54
+    dmax, rho, K = 5, 0.45, 1
+    X = lambda d: X0 + 14 + d * (X1 - X0 - 26) / dmax
+    Y = lambda v: base - v * (base - top)
+    b.append(f'<rect class="g-keep"{A("fade", 0.5)} x="{X0:.1f}" y="{top - 10}" width="{X(K + 0.5) - X0:.1f}" height="{base - top + 10}" rx="6"/>')
+    b.append(f'<path class="d-axis" d="M{X0} {top - 12} V{base} H{X1}"/>')
+    env = [(X(t / 25), Y(rho ** (t / 25))) for t in range(0, int((dmax + 0.3) * 25) + 1)]
+    b.append(f'<polyline class="c-ink c-dash"{A("fade", 1.0)} points="{pts(env)}"/>')
+    shades = {0: [1.0], 1: [0.95, 0.66, 0.42], 2: [0.9, 0.6, 0.38], 3: [0.95, 0.62, 0.35], 4: [0.9, 0.45], 5: [0.92, 0.4]}
+    for d in range(dmax + 1):
+        us = shades[d]
+        for k, u in enumerate(us):
+            dx = 0 if len(us) == 1 else (k - (len(us) - 1) / 2) * 0.24
+            cls = "g-node-i" if d == 0 else ("d-node-near" if d <= K else "d-node")
+            b.append(f'<circle class="{cls}"{A("pop", 0.5 + 0.1 * d + 0.03 * k)} cx="{X(d + dx):.1f}" cy="{Y(u * rho ** d):.1f}" r="{6 if d == 0 else 4.6}"/>')
+        b.append(tex(f"${d}$", X(d), base + 17, 13, anchor="middle", cls="t-soft"))
+    b.append(tex(r"$|\partial^{\beta} Q_i|$", X0 - 2, top - 20, 17))
+    b.append(tex(r"$d(\beta)$", X1, base + 40, 16, anchor="end"))
+    b.append(tex(r"$L_Q\,\rho^{d(\beta)}$", X(2.15), Y(rho ** 1.55) - 8, 16, extra=A("fade", 1.2)))
+    b.append(tex(r"$d(\beta)\leq\kappa$", (X0 + X(K + 0.5)) / 2, base - 9, 13, anchor="middle", cls="t-warm", extra=A("fade", 0.6)))
     return svg("f-rl", "Derivatives of a local Q-function decay exponentially with graph distance",
-               "Left: a heat map of second-order derivatives of agent i's Q-function with respect to the states of agents j and k on a chain. "
-               "The magnitude is largest at i and fades in concentric squares, because it is controlled by the distance to the farthest agent involved; "
-               "the block within two hops of i is kept, the rest is marginalized. Right: first-order derivatives with respect to each agent's state, "
-               "under the envelope rho to the power of the distance to i. Below: the bound, derivative magnitude at most L_Q times rho to the power d of beta.",
-               "".join(b), h=302)
+               "Left: a network of agents; agent i and its neighborhood N_i^kappa are highlighted, and the other agents form N_-i^kappa, which is marginalized. "
+               "Right: magnitudes of derivatives of Q_i plotted against the graph distance d(beta) from i to the farthest agent involved; "
+               "they stay below the envelope L_Q rho to the power d(beta), which decays exponentially, and derivatives with d(beta) at most kappa are kept.",
+               "".join(b), h=304)
 
 # ---------------------------------------------------------------- 3. eps-sufficiency
 def fig_data():
