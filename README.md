@@ -12,7 +12,7 @@ Plain static HTML and CSS, no build step:
 - `notes/`: course notes linked from the Teaching page.
 - `Salah_Chikhi_CV.pdf`: the CV linked from the menu.
 
-The six research figures on the home page are generated SVG. To change one, edit
+The research figures on the home page are generated SVG. To change one, edit
 `tools/build_figures.py` and run, from the repository root:
 
 ```bash
