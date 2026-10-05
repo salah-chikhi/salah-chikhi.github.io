@@ -7,7 +7,18 @@
   <meta name="description" content="Salah Chikhi&#39;s website">
   <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#15191d" media="(prefers-color-scheme: dark)">
-  <script>try { var t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+  <script>
+    (function () {
+      function apply() {
+        try {
+          var t = localStorage.getItem("theme");
+          if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+        } catch (e) {}
+      }
+      apply();
+      addEventListener("pageshow", function (e) { if (e.persisted) apply(); });
+    })();
+  </script>
   <script src="theme.js" defer></script>
   <meta property="og:type" content="website">
   <meta property="og:title" content="Salah Chikhi">
