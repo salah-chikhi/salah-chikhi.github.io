@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Teaching | Salah Chikhi</title>
   <meta name="description" content="Salah Chikhi&#39;s website">
-  <meta name="theme-color" content="#fbfaf7">
+  <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#15191d" media="(prefers-color-scheme: dark)">
+  <script>try { var t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+  <script src="theme.js" defer></script>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="site.css">
 </head>
@@ -20,6 +23,10 @@
         <a class="active" href="teaching.html" aria-current="page">Teaching</a>
         <a href="misc.html">Miscellaneous</a>
         <a href="Salah_Chikhi_CV.pdf">CV</a>
+        <button class="theme-toggle" type="button" aria-label="Switch to dark mode">
+          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.2M12 20.3v2.2M4.6 4.6l1.5 1.5M17.9 17.9l1.5 1.5M1.5 12h2.2M20.3 12h2.2M4.6 19.4l1.5-1.5M17.9 6.1l1.5-1.5"/></svg>
+        </button>
       </nav>
     </div>
   </header>
@@ -42,7 +49,7 @@
           <div>
             <p class="rule-label">2023</p>
             <h3><a href="notes/recueil-problemes-terminale.pdf">Recueil de problèmes pour Terminale</a></h3>
-            <p>A collection of problems I thought about in high school and at the start of my undergraduate studies, for final-year high-school students who want to go beyond the curriculum by proving interesting results themselves. A first part of preliminaries sets up the tools; a second part gathers long guided problems in the spirit of the Concours Général. Difficulty is rated from one to five stars, and hints are given for the hardest questions.</p>
+            <p>A collection of problems I thought about in high school and at the start of my undergraduate studies, for final-year high-school students who want to go beyond the curriculum by proving interesting results themselves. A first part of preliminaries sets up the tools; a second part gathers long guided problems in the spirit of the Concours Général. Difficulty is rated from one to five stars, and hints are given for the hardest questions. I used it as training material for a group of gifted students preparing for the Concours Général.</p>
             <p class="course-links"><a href="notes/recueil-problemes-terminale.pdf">Read the PDF</a></p>
           </div>
         </article>

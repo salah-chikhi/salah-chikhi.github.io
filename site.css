@@ -82,6 +82,23 @@ a:focus-visible { outline: 3px solid var(--warm); outline-offset: 4px; }
 .site-nav a:hover, .site-nav a.active { color: var(--ink); }
 .site-nav a:hover::after, .site-nav a.active::after { transform: scaleX(1); }
 
+/* Light/dark toggle */
+.theme-toggle {
+  display: inline-grid; place-items: center; width: 34px; height: 34px; margin-left: 0.15rem; padding: 0;
+  border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--ink-soft);
+  cursor: pointer; transition: color 150ms ease, border-color 150ms ease;
+}
+.theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+.theme-toggle:focus-visible { outline: 2px solid var(--warm); outline-offset: 3px; }
+.theme-toggle svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.theme-toggle .icon-sun { display: none; }
+:root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+:root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: block; }
+  :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+}
+
 /* Hero */
 .profile-hero {
   display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start;

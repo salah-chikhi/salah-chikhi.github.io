@@ -7,6 +7,7 @@ Plain static HTML and CSS, no build step:
 
 - `index.html`, `publications.html`, `teaching.html`, `misc.html`: the four pages.
 - `site.css`: all styles, light and dark themes.
+- `theme.js`: the light/dark toggle in the menu; without a saved choice the site follows the system setting.
 - `images/`: portrait, banner, book covers, paper first pages, Levine figures.
 - `notes/`: course notes linked from the Teaching page.
 - `Salah_Chikhi_CV.pdf`: the CV linked from the menu.
