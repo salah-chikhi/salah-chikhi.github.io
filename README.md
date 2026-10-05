@@ -1,7 +1,7 @@
-# salahchikhi.github.io
+# salah-chikhi.github.io
 
 Personal academic website of Salah Chikhi, served by GitHub Pages at
-<https://salahchikhi.github.io/>.
+<https://salah-chikhi.github.io/>.
 
 Plain static HTML and CSS, no build step:
 
