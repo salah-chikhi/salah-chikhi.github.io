@@ -60,42 +60,68 @@ def fig_opt():
 
 # ---------------------------------------------------------------- 2. Taylor / networked MDP
 def fig_rl():
-    b = []
-    cx, cy, R, N = 132, 140, 102, 16
-    P = [(cx + R * math.sin(2 * math.pi * k / N), cy - R * math.cos(2 * math.pi * k / N)) for k in range(N)]
-    arc = [(cx + R * math.sin(t), cy - R * math.cos(t)) for t in [2 * math.pi * (x / 10) / N for x in range(-25, 26)]]
-    b.append(f'<polyline class="d-hoodarc"{A("fade", 0.7)} points="{pts(arc)}"/>')
-    for k in range(N):
-        (x1, y1), (x2, y2) = P[k], P[(k + 1) % N]
-        b.append(f'<line class="d-edge"{A("fade", 0.05*min(k, N-k))} x1="{f(x1)}" y1="{f(y1)}" x2="{f(x2)}" y2="{f(y2)}"/>')
-    for k in range(N):
-        d = min(k, N - k)
-        cls = "d-node-hot" if d == 0 else ("d-node-near" if d <= 2 else "d-node")
-        b.append(f'<circle class="{cls}"{A("pop", 0.12*d)} cx="{f(P[k][0])}" cy="{f(P[k][1])}" r="{10 if d == 0 else 7.5}"/>')
-    b.append(f'<text class="d-math-i" x="{cx}" y="{cy-R+34}" text-anchor="middle">i</text>')
-    b.append(f'<text class="d-note" x="{cx}" y="{cy+6}" text-anchor="middle">two-hop neighborhood of i</text>')
-    X0, X1, Y0, Y1 = 300, 500, 232, 30
-    rho, dmax = 0.3, 5
-    X = lambda d: X0 + 14 + d * (X1 - X0 - 28) / dmax
-    Y = lambda v: Y1 + (-math.log10(v)) / 3.2 * (Y0 - Y1)
-    kx = (X(2) + X(3)) / 2
-    b.append(f'<rect class="d-keep"{A("growx", 0.9)} x="{X0+1}" y="{Y1-6}" width="{f(kx-X0-1)}" height="{Y0-Y1+6}"/>')
-    b.append(f'<path class="d-axis" d="M{X0} {Y1-6} V{Y0} H{X1}"/>')
-    for e, lab in ((0, "1"), (1, "10⁻¹"), (2, "10⁻²"), (3, "10⁻³")):
-        b.append(f'<text class="d-tick" x="{X0-6}" y="{f(Y(10**-e)+4)}" text-anchor="end">{lab}</text>')
-    curve = [(X(d / 20), Y(rho ** (d / 20))) for d in range(0, dmax * 20 + 1)]
-    b.append(f'<polyline class="c-ink c-dash"{A("fade", 1.0)} points="{pts(curve)}"/>')
-    for d in range(dmax + 1):
-        v = rho ** d * [1, 0.55, 0.8, 0.45, 0.7, 0.5][d]
-        cls = "d-node-hot" if d == 0 else ("d-node-near" if d <= 2 else "d-node")
-        b.append(f'<circle class="{cls}"{A("pop", 1.1 + 0.12*d)} cx="{f(X(d))}" cy="{f(Y(v))}" r="5.5"/>')
-        b.append(f'<text class="d-tick" x="{f(X(d))}" y="{Y0+17}" text-anchor="middle">{d}</text>')
-    b.append(f'<text class="d-math" x="{f(X(2.3))}" y="{f(Y(0.25))}">ρ{sup("d")}</text>')
-    b.append(f'<text class="d-note" x="{(X0+X1)//2}" y="{Y0+40}" text-anchor="middle">graph distance d</text>')
-    b.append(f'<text class="d-note" x="{(X0+X1)//2+30}" y="{Y1+10}" text-anchor="middle">kept</text>')
-    return svg("f-rl", "Taylor coefficients decay with graph distance",
-               "Left: a ring of agents; agent i and its two-hop neighborhood are kept. Right: derivatives of the local Q-function that involve agents at graph distance d are bounded by a constant times rho to the d, so coefficients beyond the neighborhood are negligible.",
-               "".join(b), h=285)
+    """Derivatives of agent i's local Q-function decay exponentially with graph distance.
+
+    Left: second-order derivatives |d2 Q_i / ds_j ds_k| on a chain of agents; the bound depends on the
+    farthest agent involved, max(|j-i|, |k-i|), so the map is made of concentric square rings.
+    Right: first-order derivatives |dQ_i / ds_j| under the envelope rho^|j-i|.
+    Schematic magnitudes: rho = 0.5, kept neighborhood kappa = 2.
+    """
+    rho, K, R = 0.5, 2, 4                      # decay rate, kept radius, agents shown on each side of i
+    b = ['<defs><pattern id="rl-hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+         '<line class="d-hatch" x1="0" y1="0" x2="0" y2="5"/></pattern></defs>']
+
+    # left: heat map of second-order derivatives
+    x0, y0, pitch, cell = 40, 20, 22, 20
+    n = 2 * R + 1
+    for bj in range(n):
+        for aj in range(n):
+            a, c = aj - R, bj - R
+            m = max(abs(a), abs(c))
+            x, y = x0 + aj * pitch, y0 + bj * pitch
+            op = 0.10 + 0.90 * rho ** m
+            b.append(f'<rect class="d-heat" data-a="fade" style="--d:{0.07*m:.2f}s;opacity:{op:.3f}" x="{x}" y="{y}" width="{cell}" height="{cell}" rx="3"/>')
+            if m > K:
+                b.append(f'<rect{A("fade", 0.07 * m)} x="{x}" y="{y}" width="{cell}" height="{cell}" rx="3" fill="url(#rl-hatch)"/>')
+    kx, ky = x0 + (R - K) * pitch - 4, y0 + (R - K) * pitch - 4
+    kw = (2 * K + 1) * pitch - (pitch - cell) + 8
+    b.append(f'<rect class="d-keepbox"{A("draw", 0.6)} x="{kx}" y="{ky}" width="{kw}" height="{kw}" rx="6"/>')
+    side = n * pitch - (pitch - cell)
+    cx = x0 + R * pitch + cell / 2
+    b.append(f'<text class="d-tick" x="{f(cx)}" y="{y0 + side + 14}" text-anchor="middle">i</text>')
+    b.append(f'<text class="d-tick" x="{x0 - 8}" y="{f(y0 + R * pitch + cell / 2 + 4)}" text-anchor="end">i</text>')
+    b.append(f'<text class="d-note" x="{f(x0 + side / 2)}" y="{y0 + side + 34}" text-anchor="middle">|∂²Q{sub("i")} / ∂s{sub("j")}∂s{sub("k")}|  over agents j, k</text>')
+
+    # right: first-order derivatives with their exponential envelope
+    X0, X1, base, H = 292, 500, 196, 150
+    step = (X1 - X0) / n
+    X = lambda a: X0 + (a + R + 0.5) * step
+    Y = lambda a: base - H * rho ** abs(a)
+    b.append(f'<rect class="d-keep d-keepzone"{A("fade", 0.6)} x="{f(X(-K) - step / 2)}" y="{base - H - 14}" width="{f((2 * K + 1) * step)}" height="{H + 14}" rx="6"/>')
+    env = [(X(t / 20), Y(t / 20)) for t in range(int((-R - 0.45) * 20), int((R + 0.45) * 20) + 1)]
+    b.append(f'<polyline class="c-ink c-dash"{A("fade", 1.1)} points="{pts(env)}"/>')
+    b.append(f'<line class="d-axis" x1="{X0}" y1="{base}" x2="{X1}" y2="{base}"/>')
+    for a in range(-R, R + 1):
+        x, y = X(a), Y(a)
+        kept = abs(a) <= K
+        b.append(f'<line class="d-stem{"" if kept else " d-stem-off"}"{A("growy", 0.25 + 0.09 * abs(a))} x1="{f(x)}" y1="{base}" x2="{f(x)}" y2="{f(y)}"/>')
+        cls = "d-node-hot" if a == 0 else ("d-node-near" if kept else "d-node")
+        b.append(f'<circle class="{cls}"{A("pop", 0.55 + 0.09 * abs(a))} cx="{f(x)}" cy="{f(y)}" r="{6 if a == 0 else 5}"/>')
+    b.append(f'<text class="d-tick" x="{f(X(0))}" y="{base + 14}" text-anchor="middle">i</text>')
+    b.append(f'<text class="d-label d-warm" x="{f(X(K) + step / 2 - 4)}" y="{base - H - 2}" text-anchor="end">kept</text>')
+    b.append(f'<text class="d-math"{A("fade", 1.2)} x="{f(X(2.6))}" y="{f(Y(1.6))}">ρ{sup("|j−i|")}</text>')
+    b.append(f'<text class="d-note" x="{f((X0 + X1) / 2)}" y="{y0 + side + 34}" text-anchor="middle">|∂Q{sub("i")} / ∂s{sub("j")}|  along the chain</text>')
+
+    # the bound behind both panels
+    b.append('<line class="d-divider" x1="30" y1="258" x2="490" y2="258"/>')
+    b.append(f'<text class="d-math"{A("fade", 1.4)} x="260" y="279" text-anchor="middle" font-size="15">|∂{sup("β")}Q{sub("i")}| ≤ L{sub("Q")} ρ{sup("d(β)")}</text>')
+    b.append(f'<text class="d-note"{A("fade", 1.4)} x="260" y="296" text-anchor="middle">d(β): graph distance from i to the farthest agent involved in the derivative</text>')
+    return svg("f-rl", "Derivatives of a local Q-function decay exponentially with graph distance",
+               "Left: a heat map of second-order derivatives of agent i's Q-function with respect to the states of agents j and k on a chain. "
+               "The magnitude is largest at i and fades in concentric squares, because it is controlled by the distance to the farthest agent involved; "
+               "the block within two hops of i is kept, the rest is marginalized. Right: first-order derivatives with respect to each agent's state, "
+               "under the envelope rho to the power of the distance to i. Below: the bound, derivative magnitude at most L_Q times rho to the power d of beta.",
+               "".join(b), h=302)
 
 # ---------------------------------------------------------------- 3. eps-sufficiency
 def fig_data():

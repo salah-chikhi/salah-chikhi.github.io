@@ -193,6 +193,12 @@ a:focus-visible { outline: 3px solid var(--warm); outline-offset: 4px; }
 .d-square { fill: var(--surface); stroke: var(--ink-soft); stroke-width: 1.2; }
 .d-win { fill: var(--accent); opacity: 0.85; }
 .d-win-warm { fill: var(--warm); opacity: 0.8; }
+.d-heat { fill: var(--accent); }
+.d-hatch { stroke: var(--panel); stroke-width: 2; }
+.d-keepbox { fill: none; stroke: var(--warm); stroke-width: 2; }
+.d-keepzone { stroke: var(--warm); stroke-width: 1.5; }
+.d-stem { stroke: var(--accent); stroke-width: 2.4; stroke-linecap: round; }
+.d-stem-off { stroke: var(--ink-soft); opacity: 0.55; }
 .d-dot-accent { fill: var(--accent); stroke: var(--panel); stroke-width: 1.5; }
 .g-bubble { fill: var(--warm); opacity: 0.22; }
 
