@@ -21,7 +21,9 @@
   </script>
   <script src="theme.js" defer></script>
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Salah Chikhi">
   <meta property="og:title" content="Salah Chikhi">
+  <meta name="twitter:card" content="summary">
   <meta property="og:description" content="Salah Chikhi&#39;s website">
   <meta property="og:image" content="https://salah-chikhi.github.io/images/profile.jpg">
   <meta property="og:url" content="https://salah-chikhi.github.io/">
@@ -29,19 +31,61 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="site.css">
   <script type="application/ld+json">
-  {
+{
     "@context": "https://schema.org",
-    "@type": "Person",
-    "name": "Salah Chikhi",
-    "image": "https://salah-chikhi.github.io/images/profile.jpg",
-    "url": "https://salah-chikhi.github.io/",
-    "affiliation": [
-      { "@type": "CollegeOrUniversity", "name": "University of Oxford" },
-      { "@type": "CollegeOrUniversity", "name": "École polytechnique" },
-      { "@type": "CollegeOrUniversity", "name": "Massachusetts Institute of Technology" }
-    ],
-    "sameAs": ["https://www.linkedin.com/in/salah-chikhi-a50a50303/", "https://scholar.google.com/citations?user=MFGI1vgAAAAJ"],
-    "knowsAbout": ["Optimization", "Reinforcement learning", "Experiment design", "Machine learning systems", "Probability"]
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://salah-chikhi.github.io/#website",
+        "url": "https://salah-chikhi.github.io/",
+        "name": "Salah Chikhi",
+        "about": {
+          "@id": "https://salah-chikhi.github.io/#person"
+        }
+      },
+      {
+        "@type": "Person",
+        "@id": "https://salah-chikhi.github.io/#person",
+        "name": "Salah Chikhi",
+        "alternateName": "Salah R. Chikhi",
+        "url": "https://salah-chikhi.github.io/",
+        "image": "https://salah-chikhi.github.io/images/profile.jpg",
+        "description": "MSc student in Mathematics at the University of Oxford and ingénieur polytechnicien at École polytechnique, working on optimization, deep learning and reinforcement learning.",
+        "affiliation": [
+          {
+            "@type": "CollegeOrUniversity",
+            "name": "University of Oxford",
+            "url": "https://www.maths.ox.ac.uk/"
+          },
+          {
+            "@type": "CollegeOrUniversity",
+            "name": "École polytechnique",
+            "url": "https://www.polytechnique.edu/"
+          },
+          {
+            "@type": "CollegeOrUniversity",
+            "name": "Massachusetts Institute of Technology",
+            "url": "https://www.eecs.mit.edu/"
+          }
+        ],
+        "alumniOf": [
+          {
+            "@type": "School",
+            "name": "Lycée du Parc"
+          }
+        ],
+        "knowsAbout": [
+          "Deep learning",
+          "Optimization",
+          "Reinforcement learning"
+        ],
+        "sameAs": [
+          "https://scholar.google.com/citations?user=MFGI1vgAAAAJ",
+          "https://www.linkedin.com/in/salah-chikhi-a50a50303/",
+          "https://github.com/salah-chikhi"
+        ]
+      }
+    ]
   }
   </script>
 </head>
